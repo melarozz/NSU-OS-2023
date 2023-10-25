@@ -4,7 +4,7 @@
 #define BUFSIZE 512
 
 int main(int argc, char **argv) {
-    FILE *fpin;
+    FILE *fpin, *fpout;
     char line[BUFSIZE];
     int emptyLineCount = 0;
 
