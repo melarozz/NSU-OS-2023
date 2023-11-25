@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
 
@@ -39,7 +40,15 @@ int main() {
     }
 
     printf("Enter pattern: ");
-    scanf("%s", pattern);
+    if (fgets(pattern, sizeof(pattern), stdin) == NULL) {
+        printf("Error reading pattern\n");
+        return 1;
+    }
+
+    size_t len = strlen(pattern);
+    if (len > 0 && pattern[len - 1] == '\n') {
+        pattern[len - 1] = '\0';
+    }
 
     if (strchr(pattern, '/') != NULL) {
         printf("Using / is restricted\n");
