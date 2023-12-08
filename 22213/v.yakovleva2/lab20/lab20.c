@@ -4,9 +4,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #define CHUNK_SIZE 10
-
-int patternFound = 0;
-
 int matches(const char *name, const char *pattern) {
     while (*name && *pattern) {
         if (*pattern != '?' && *pattern != *name) {
@@ -41,74 +38,80 @@ int isDirectory(const char *path) {
     return S_ISDIR(path_stat.st_mode);
 }
 
-void searchFiles(const char *path, const char *pattern) {
+void searchFiles(const char *basePath, const char *pattern) {
     DIR *dir;
     struct dirent *entry;
 
-    if ((dir = opendir(path)) == NULL) {
-        perror("opendir() error");
-        exit(1);
-    } else {
+    if ((dir = opendir(basePath)) != NULL) {
         while ((entry = readdir(dir)) != NULL) {
-            size_t path_len = strlen(path);
-            size_t entry_name_len = strlen(entry->d_name);
-            size_t fullpath_len = path_len + entry_name_len + 2; // +1 for '/' and +1 for null terminator
-
-            char *fullpath = (char *)malloc(fullpath_len);
+            char *fullpath = NULL;
+            size_t pathLen = strlen(basePath) + strlen(entry->d_name) + 2; // 2 for '/' and null terminator
+            fullpath = (char *)malloc(pathLen * sizeof(char));
             if (fullpath == NULL) {
-                printf("Memory allocation error.\n");
+                printf("Memory allocation failed\n");
                 closedir(dir);
                 return;
             }
-            snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
+            snprintf(fullpath, pathLen, "%s/%s", basePath, entry->d_name);
 
             if (matches(fullpath, pattern)) {
                 printf("%s\n", fullpath);
-                patternFound = 1;
             }
 
             if (isDirectory(fullpath) && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
                 searchFiles(fullpath, pattern);
             }
+
+            free(fullpath);
         }
         closedir(dir);
+    } else {
+        perror("opendir failed.\n");
+        return;
     }
 }
 
-int main() {
-    size_t currentSize = CHUNK_SIZE;
-    size_t usedSize = 0;
-    char *pattern = (char *)malloc(currentSize * sizeof(char));
 
-    if (pattern == NULL) {
-        printf("Memory allocation error.\n");
-        return 1;
-    }
+int main() {
+    char chunk[CHUNK_SIZE];
+    char *pattern = NULL;
+    size_t patternSize = 0;
 
     printf("Enter pattern: ");
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF) {
-        if (usedSize + 1 >= currentSize) {
-            currentSize += CHUNK_SIZE;
-            char *temp = (char *)realloc(pattern, currentSize * sizeof(char));
-            if (temp == NULL) {
-                printf("Memory reallocation error.\n");
-                free(pattern);
-                return 1;
-            }
-            pattern = temp;
+
+    while (1) {
+        if (fgets(chunk, sizeof(chunk), stdin) == NULL) {
+            printf("Error reading pattern\n");
+            return 1;
         }
-        pattern[usedSize++] = (char)c;
+
+        size_t chunkLen = strlen(chunk);
+
+        if (chunk[chunkLen - 1] == '\n') {
+            chunk[chunkLen - 1] = '\0';
+            chunkLen--;
+        }
+
+        char *temp = realloc(pattern, patternSize + chunkLen + 1);
+        if (temp == NULL) {
+            printf("Memory allocation failed\n");
+            free(pattern);
+            return 1;
+        }
+        pattern = temp;
+
+        memcpy(pattern + patternSize, chunk, chunkLen);
+        patternSize += chunkLen;
+
+        if (chunkLen < CHUNK_SIZE - 1) {
+            pattern[patternSize] = '\0'; // Null-terminate the pattern
+            break;
+        }
     }
-    pattern[usedSize] = '\0';
 
     searchFiles(".", pattern);
 
-    if (!patternFound) {
-        printf("No files matching the pattern '%s' found. \n", pattern);
-    }
-
     free(pattern);
+
     return 0;
 }
-
