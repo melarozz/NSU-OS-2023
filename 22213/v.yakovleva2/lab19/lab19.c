@@ -3,6 +3,8 @@
 #include <dirent.h>
 #include <string.h>
 
+#define CHUNK_SIZE 10
+
 int matches(const char *name, const char *pattern) {
     while (*name && *pattern) {
         if (*pattern != '?' && *pattern != *name) {
@@ -28,30 +30,48 @@ int matches(const char *name, const char *pattern) {
     }
     return *name == '\0' && *pattern == '\0';
 }
-int main() {
-    char pattern[100];
-    struct dirent *entry;
-    DIR *dir;
-    int found = 0;
 
-    if ((dir = opendir(".")) == NULL) {
-        perror("Couldn't open current directory");
+int main() {
+    size_t currentSize = CHUNK_SIZE;
+    size_t usedSize = 0;
+    char *pattern = (char *)malloc(currentSize * sizeof(char));
+
+    if (pattern == NULL) {
+        printf("Memory allocation error.\n");
         return 1;
     }
 
     printf("Enter pattern: ");
-    if (fgets(pattern, sizeof(pattern), stdin) == NULL) {
-        printf("Error reading pattern\n");
-        return 1;
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {
+        if (usedSize + 1 >= currentSize) {
+            currentSize += CHUNK_SIZE;
+            char *temp = (char *)realloc(pattern, currentSize * sizeof(char));
+            if (temp == NULL) {
+                printf("Memory reallocation error.\n");
+                free(pattern);
+                return 1;
+            }
+            pattern = temp;
+        }
+        pattern[usedSize++] = (char)c;
     }
+    pattern[usedSize] = '\0';
 
-    size_t len = strlen(pattern);
-    if (len > 0 && pattern[len - 1] == '\n') {
-        pattern[len - 1] = '\0';
+    DIR *dir;
+    struct dirent *entry;
+    int found = 0;
+
+    if ((dir = opendir(".")) == NULL) {
+        perror("Couldn't open current directory");
+        free(pattern);
+        return 1;
     }
 
     if (strchr(pattern, '/') != NULL) {
         printf("Using / is restricted\n");
+        free(pattern);
+        closedir(dir);
         return 0;
     }
 
@@ -66,6 +86,7 @@ int main() {
         printf("%s did not match any file in the current directory\n", pattern);
     }
 
+    free(pattern);
     closedir(dir);
     return 0;
 }
