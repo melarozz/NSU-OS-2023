@@ -45,7 +45,10 @@ void searchFiles(const char *path, const char *pattern) {
     DIR *dir;
     struct dirent *entry;
 
-    if ((dir = opendir(path)) != NULL) {
+    if ((dir = opendir(path)) == NULL) {
+        perror("opendir() error");
+        return 1;
+    } else {
         while ((entry = readdir(dir)) != NULL) {
             size_t path_len = strlen(path);
             size_t entry_name_len = strlen(entry->d_name);
