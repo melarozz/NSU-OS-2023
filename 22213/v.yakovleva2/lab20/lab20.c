@@ -51,7 +51,7 @@ void searchFiles(const char *path, const char *pattern) {
                 printf("%s\n", fullpath);
             }
 
-            if (isDirectory(fullpath) && strcmp(entry->d_name, ".") != 0 && str>
+            if (isDirectory(fullpath) && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
                 searchFiles(fullpath, pattern);
             }
         }
