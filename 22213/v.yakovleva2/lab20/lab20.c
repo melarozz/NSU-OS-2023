@@ -4,6 +4,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #define CHUNK_SIZE 10
+
+int patternFound = 0;
+
 int matches(const char *name, const char *pattern) {
     while (*name && *pattern) {
         if (*pattern != '?' && *pattern != *name) {
@@ -56,6 +59,7 @@ void searchFiles(const char *basePath, const char *pattern) {
 
             if (matches(fullpath, pattern)) {
                 printf("%s\n", fullpath);
+                patternFound = 1;
             }
 
             if (isDirectory(fullpath) && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
@@ -110,6 +114,10 @@ int main() {
     }
 
     searchFiles(".", pattern);
+
+    if (!patternFound) {
+        printf("No files matching '%s' pattern found\n", pattern);
+    }
 
     free(pattern);
 
