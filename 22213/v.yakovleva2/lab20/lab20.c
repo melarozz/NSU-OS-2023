@@ -3,6 +3,8 @@
 #include <dirent.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <errno.h>
+
 #define CHUNK_SIZE 10
 
 int patternFound = 0;
@@ -30,6 +32,9 @@ int matches(const char *name, const char *pattern) {
         name++;
         pattern++;
     }
+    while (*pattern == '*') {
+        pattern++;
+    }
     return *name == '\0' && *pattern == '\0';
 }
 
@@ -47,6 +52,11 @@ void searchFiles(const char *basePath, const char *pattern) {
 
     if ((dir = opendir(basePath)) != NULL) {
         while ((entry = readdir(dir)) != NULL) {
+            if (entry == NULL && !errno) {
+                printf("Error reading directory\n");
+                closedir(dir);
+                return;
+            }
             char *fullpath = NULL;
             size_t pathLen = strlen(basePath) + strlen(entry->d_name) + 2; // 2 for '/' and null terminator
             fullpath = (char *)malloc(pathLen * sizeof(char));
@@ -56,6 +66,10 @@ void searchFiles(const char *basePath, const char *pattern) {
                 return;
             }
             snprintf(fullpath, pathLen, "%s/%s", basePath, entry->d_name);
+
+            if (strncmp(fullpath, "./", 2) == 0) {
+                memmove(fullpath, fullpath + 2, strlen(fullpath));
+            }
 
             if (matches(fullpath, pattern)) {
                 printf("%s\n", fullpath);
