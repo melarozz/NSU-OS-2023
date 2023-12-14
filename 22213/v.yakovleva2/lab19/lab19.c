@@ -37,7 +37,7 @@ int main() {
     char *pattern = (char *)malloc(currentSize * sizeof(char));
 
     if (pattern == NULL) {
-        printf("Memory allocation error.\n");
+        perror("Memory allocation error.\n");
         return 1;
     }
 
@@ -48,7 +48,7 @@ int main() {
             currentSize += CHUNK_SIZE;
             char *temp = (char *)realloc(pattern, currentSize * sizeof(char));
             if (temp == NULL) {
-                printf("Memory reallocation error.\n");
+                perror("Memory reallocation error.\n");
                 free(pattern);
                 return 1;
             }
