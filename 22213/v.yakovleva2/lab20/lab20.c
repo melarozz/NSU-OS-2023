@@ -51,7 +51,7 @@ void searchFiles(const char *basePath, const char *pattern) {
             size_t pathLen = strlen(basePath) + strlen(entry->d_name) + 2; // 2 for '/' and null terminator
             fullpath = (char *)malloc(pathLen * sizeof(char));
             if (fullpath == NULL) {
-                printf("Memory allocation failed\n");
+                perror("Memory allocation failed\n");
                 closedir(dir);
                 return;
             }
@@ -85,7 +85,7 @@ int main() {
 
     while (1) {
         if (fgets(chunk, sizeof(chunk), stdin) == NULL) {
-            printf("Error reading pattern\n");
+            perror("Error reading pattern\n");
             return 1;
         }
 
@@ -98,7 +98,7 @@ int main() {
 
         char *temp = realloc(pattern, patternSize + chunkLen + 1);
         if (temp == NULL) {
-            printf("Memory allocation failed\n");
+            perror("Memory allocation failed\n");
             free(pattern);
             return 1;
         }
