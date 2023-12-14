@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
+#include <errno.h>
 
 #define CHUNK_SIZE 10
 
@@ -27,6 +28,9 @@ int matches(const char *name, const char *pattern) {
         }
         name++;
         pattern++;
+    }
+    while (*pattern == '*') {
+            pattern++;
     }
     return *name == '\0' && *pattern == '\0';
 }
@@ -76,6 +80,12 @@ int main() {
     }
 
     while ((entry = readdir(dir)) != NULL) {
+        if (entry == NULL && !found && !errno) {
+            printf("Error reading directory\n");
+            free(pattern);
+            closedir(dir);
+            return 1;
+        }
         if (matches(entry->d_name, pattern)) {
             printf("%s\n", entry->d_name);
             found = 1;
