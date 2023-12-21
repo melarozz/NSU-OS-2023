@@ -80,16 +80,17 @@ int main() {
     }
 
     while ((entry = readdir(dir)) != NULL) {
-        if (entry == NULL && !found && !errno) {
-            printf("Error reading directory\n");
-            free(pattern);
-            closedir(dir);
-            return 1;
-        }
         if (matches(entry->d_name, pattern)) {
             printf("%s\n", entry->d_name);
             found = 1;
         }
+    }
+
+    if (errno) {
+        printf("Error reading directory\n");
+        free(pattern);
+        closedir(dir);
+        return 1;
     }
 
     if (!found) {
