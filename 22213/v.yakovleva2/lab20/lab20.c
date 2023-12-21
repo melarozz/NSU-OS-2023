@@ -52,11 +52,6 @@ void searchFiles(const char *basePath, const char *pattern) {
 
     if ((dir = opendir(basePath)) != NULL) {
         while ((entry = readdir(dir)) != NULL) {
-            if (entry == NULL && !errno) {
-                printf("Error reading directory\n");
-                closedir(dir);
-                return;
-            }
             char *fullpath = NULL;
             size_t pathLen = strlen(basePath) + strlen(entry->d_name) + 2; // 2 for '/' and null terminator
             fullpath = (char *)malloc(pathLen * sizeof(char));
@@ -81,6 +76,12 @@ void searchFiles(const char *basePath, const char *pattern) {
             }
 
             free(fullpath);
+        }
+        if (errno) {
+            printf("Error reading directory\n");
+            free(pattern);
+            closedir(dir);
+            return;
         }
         closedir(dir);
     } else {
