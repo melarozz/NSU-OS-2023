@@ -79,7 +79,6 @@ void searchFiles(const char *basePath, const char *pattern) {
         }
         if (errno) {
             printf("Error reading directory\n");
-            free(pattern);
             closedir(dir);
             return;
         }
